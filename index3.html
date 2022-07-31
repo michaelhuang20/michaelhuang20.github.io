@@ -1,0 +1,165 @@
+<html>
+<script src='https://d3js.org/d3.v5.min.js'></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-annotation/2.5.1/d3-annotation.min.js"></script>
+<style>
+path {stroke: black;}
+#tooltip {
+    opacity: 0;
+    position: absolute;
+    text-align: center;
+    width: 170; height: 80px;
+    background-color: oldlace;
+    border: 1px || solid;
+    border-radius: 5px;
+    padding: 10px;
+}
+</style>
+<body onload='init()'>
+<br>
+<h1 style="color:black;font-size:40px;text-align:center">2017 Cars Fuel Efficiency</h1>  
+<p>
+    <br> We explored many trends between cars and their different fuel groups. But it important to consider
+    the sample sizes of these fuel groups, as small sample sizes lead to less reliable inferences. In this slide,
+    we show a pie chart to observe that the sample sizes for electric and diesel cars are very small.  
+    So for these two groups, we should take our conclusions away with a grain of salt as their uncertainty may 
+    still be quite high. 
+</p>
+<br>
+<div>  
+    <a href="index.html"><strong>Start Over</strong></a>
+</div>
+<svg width=300 height=300>
+</svg>
+<div id="tooltip"></div>
+<script>
+async function init() {
+    //init
+    var margin = 510;
+    var width = 1000;
+    var height = 700;
+    const data = await d3.csv('fuel_group_summary.csv');
+
+    //scales
+
+    var color = ["#FF7F0EFF", "#BCBD22FF", "#1F77B4FF"];
+    var pie = d3.pie();
+    var arc = d3.arc().innerRadius(0).outerRadius(370);
+    
+    //tooltip
+    var tooltip = d3.select("#tooltip");
+    var mouseover = function(d, i) {
+        tooltip
+            .transition()
+            .duration(100)
+        tooltip
+            .style("opacity", 1)
+            .html("Car Fuel Group Count: "+d.data)
+            .style("left", (d3.event.pageX+50) + "px") 
+            .style("top", (d3.event.pageY) + "px")
+    }
+
+  var mousemove = function(d) {
+        tooltip
+            .style("left", (d3.event.pageX+50) + "px") 
+            .style("top", (d3.event.pageY) + "px")
+    }
+
+  // A function that change this tooltip when the leaves a point: just need to set opacity to 0 again
+  var mouseleave = function(d) {
+        tooltip
+            .transition()
+            .duration(100)
+            .style("opacity", 0)
+    }
+
+    //chart
+    d3.select("svg")
+    .attr("width", width+(200))
+    .attr("height", height+200)
+    .append("g")
+        .attr("transform","translate(" + (margin+200) + "," + margin + ")")
+    .selectAll("path")
+    .data(pie(data.map(function(d) {return d.CarCount;})))
+    .enter()
+    .append("path")
+        .attr("d", arc)
+        .style("fill", function(d,i) {return color[i];})
+        .on("mouseover", mouseover)
+        .on("mousemove", mousemove)
+        .on("mouseleave", mouseleave);
+
+    d3.select("svg").append("text").attr("x", 530).attr("y", 100).text("Fuel Group Counts Pie Chart").style("font-size", "30px").attr("alignment-baseline","middle");
+
+    //legend
+    var size = 20;
+    var x_pos = 230
+    var y_pos1 = 200
+    var y_pos2 = y_pos1+30
+    var y_pos3 = y_pos2+30
+    d3.select("svg").append("rect").attr("x",x_pos).attr("y",y_pos1).attr("height", size).attr("width",size).style("fill", "#1F77B4FF");
+    d3.select("svg").append("rect").attr("x",x_pos).attr("y",y_pos2).attr("height", size).attr("width",size).style("fill", "#FF7F0EFF");
+    d3.select("svg").append("rect").attr("x",x_pos).attr("y",y_pos3).attr("height", size).attr("width",size).style("fill", "#BCBD22FF");
+    d3.select("svg").append("text").attr("x", x_pos+25).attr("y", y_pos1+10).text("Gasoline").style("font-size", "15px").attr("alignment-baseline","middle");
+    d3.select("svg").append("text").attr("x", x_pos+25).attr("y", y_pos2+10).text("Diesel").style("font-size", "15px").attr("alignment-baseline","middle");
+    d3.select("svg").append("text").attr("x", x_pos+25).attr("y", y_pos3+10).text("Electric").style("font-size", "15px").attr("alignment-baseline","middle");
+
+    //annotations
+    const annotations = [
+        {
+            note: {
+            label: "Click Here to Go to the Beginning Slide",
+            },
+            x: 20,
+            y: 0,
+            dy: 100,
+            dx: 100,
+            color: "purple"
+        }
+    ]
+    const makeAnnotations = d3.annotation()
+        .annotations(annotations)
+    d3.select("svg")
+        .append("g")
+        .call(makeAnnotations)
+
+    const annotations2 = [
+        {
+            note: {
+            label: "Use Mouseover to See More Details",
+            },
+            x: 950,
+            y: 650,
+            dy: 100,
+            dx: 100,
+            color: "purple"
+        }
+    ]
+    const makeAnnotations2 = d3.annotation()
+        .annotations(annotations2)
+    d3.select("svg")
+        .append("g")
+        .call(makeAnnotations2)
+
+    const annotations3 = [
+        {
+            note: {
+            label: "Small Sample Sizes May Indicate Uncertain Conclusions",
+            },
+            x: 700,
+            y: 200,
+            dy: 100,
+            dx: 100,
+            color: "purple"
+        }
+    ]
+    const makeAnnotations3 = d3.annotation()
+        .annotations(annotations3)
+    d3.select("svg")
+        .append("g")
+        .call(makeAnnotations3)
+
+
+}
+</script>
+</body>
+</html>

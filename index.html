@@ -1,0 +1,200 @@
+<html>
+<script src='https://d3js.org/d3.v5.min.js'></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-annotation/2.5.1/d3-annotation.min.js"></script>
+<style>
+circle {fill: lightblue; stroke: black;} 
+#tooltip {
+    opacity: 0;
+    position: absolute;
+    text-align: center;
+    width: 170; height: 80px;
+    background-color: oldlace;
+    border: 1px || solid;
+    border-radius: 5px;
+    padding: 10px;
+}
+</style>
+<body onload='init()'>
+<br>
+<h1 style="color:black;font-size:40px;text-align:center">2017 Cars Fuel Efficiency</h1>  
+<p>
+    <br>The data we examine in this presentation is taken from a sample of cars from various brands manufactured in 2017.
+    In the chart below, we have a scatterplot that maps the average city MPG of each car again the corresponding average highway MPG.  
+    We can see from the scatterplot that there is a strong linear correlation between average city MPG and average 
+    highway MPG in our data. 
+    Furthermore, our data is color coded so we can see the differences between cars that use different types of fuels.
+    We can see that electric cars are the most fuel-efficient group. Also, the size of each dot in the scatterplot varies depending
+    on how many engine cylinders the car has, so cars with more cylinders will have larger dots. 
+</p>
+<br>
+<div>  
+    <a href="index2.html"><strong>Next Slide</strong></a>
+</div>
+<svg width=300 height=300>
+</svg>
+<div id="tooltip"></div>
+<script>
+async function init() {
+    //init
+    var margin = 200;
+    var width = 1000;
+    var height = 700;
+    const data = await d3.csv('https://flunky.github.io/cars2017.csv');
+
+    //scales
+    var xscale = d3.scaleLog().domain([10, 150]).range([0, width]);
+    var yscale = d3.scaleLog().domain([10, 150]).range([height,0]);
+    var colorscale = d3.scaleOrdinal()
+        .domain(["Gasoline", "Diesel", "Electricity"])
+        .range(["#1F77B4FF", "#FF7F0EFF", "#BCBD22FF"]);
+    
+    //tooltip
+    var tooltip = d3.select("#tooltip");
+    var mouseover = function(d, i) {
+        tooltip
+            .transition()
+            .duration(100)
+        tooltip
+            .style("opacity", 1)
+            .html("Make: "+d.Make+"<br>City MPG: "+d.AverageCityMPG+"<br>Highway MPG: "+d.AverageHighwayMPG+"<br>Cylinders: "+d.EngineCylinders)
+            .style("left", (d3.event.pageX+50) + "px") 
+            .style("top", (d3.event.pageY) + "px")
+    }
+
+  var mousemove = function(d) {
+        tooltip
+            .style("left", (d3.event.pageX+50) + "px") 
+            .style("top", (d3.event.pageY) + "px")
+    }
+
+  // A function that change this tooltip when the leaves a point: just need to set opacity to 0 again
+  var mouseleave = function(d) {
+        tooltip
+            .transition()
+            .duration(100)
+            .style("opacity", 0)
+    }
+
+
+    //chart
+    d3.select("svg")
+    .attr("width", width+2*margin)
+    .attr("height", height+2*margin)
+    .append("g")
+        .attr("transform","translate(" + margin + "," + margin + ")")
+    .selectAll("dot")
+    .data(data)
+    .enter()
+    .append("circle")
+        .attr("cx", function(d) {return xscale(d.AverageCityMPG);})
+        .attr("cy", function(d) {return yscale(d.AverageHighwayMPG);})
+        .attr("r", function(d) {return 2+parseInt(d.EngineCylinders);})
+        .style("fill", function(d) {return colorscale(d.Fuel)})
+        .on("mouseover", mouseover)
+        .on("mousemove", mousemove)
+        .on("mouseleave", mouseleave);
+
+    //loading animation
+    d3.select("svg").selectAll("circle")
+        .style("opacity", 0)
+        .transition()
+        .delay(function(d,i) {return i * 10})
+        .style("opacity", 1);
+
+    //legend
+    var size = 20;
+    var x_pos = 230
+    var y_pos1 = 200
+    var y_pos2 = y_pos1+30
+    var y_pos3 = y_pos2+30
+    d3.select("svg").append("rect").attr("x",x_pos).attr("y",y_pos1).attr("height", size).attr("width",size).style("fill", "#1F77B4FF");
+    d3.select("svg").append("rect").attr("x",x_pos).attr("y",y_pos2).attr("height", size).attr("width",size).style("fill", "#FF7F0EFF");
+    d3.select("svg").append("rect").attr("x",x_pos).attr("y",y_pos3).attr("height", size).attr("width",size).style("fill", "#BCBD22FF");
+    d3.select("svg").append("text").attr("x", x_pos+25).attr("y", y_pos1+10).text("Gasoline").style("font-size", "15px").attr("alignment-baseline","middle");
+    d3.select("svg").append("text").attr("x", x_pos+25).attr("y", y_pos2+10).text("Diesel").style("font-size", "15px").attr("alignment-baseline","middle");
+    d3.select("svg").append("text").attr("x", x_pos+25).attr("y", y_pos3+10).text("Electric").style("font-size", "15px").attr("alignment-baseline","middle");
+    
+    //axis
+    d3.select("svg").append("g")
+        .attr("transform", "translate(" + margin + "," + margin + ")")
+        .call(d3.axisLeft(yscale).tickValues([10,20,50,100]).tickFormat(d3.format("~s")));
+
+    d3.select("svg").append("text")
+        .attr("transform", "translate(" + (margin+(width / 2)) + " ," + (height + margin + 50) + ")")
+        .style("text-anchor", "middle")
+        .style("font-size", "25px")
+        .text("Average City MPG");
+
+    d3.select("svg").append("g")
+        .attr("transform", "translate(" + margin + "," + (height+margin) + ")")
+        .call(d3.axisBottom(xscale).tickValues([10,20,50,100]).tickFormat(d3.format("~s")));
+
+    d3.select("svg")
+        .append('g')
+        .attr('transform', 'translate(' + (margin-40) + ', ' + (height+margin)/2 + ')')
+        .append('text')
+        .attr('text-anchor', 'middle')
+        .attr('transform', 'rotate(-90)')
+        .style("font-size", "25px")
+        .text('Average Highway MPG');
+
+    //annotations
+    const annotations = [
+        {
+            note: {
+            label: "Click Here to Go to the Next Slide",
+            },
+            x: 20,
+            y: 0,
+            dy: 100,
+            dx: 100,
+            color: "purple"
+        }
+    ]
+    const makeAnnotations = d3.annotation()
+        .annotations(annotations)
+    d3.select("svg")
+        .append("g")
+        .call(makeAnnotations)
+
+    const annotations2 = [
+        {
+            note: {
+            label: "Use Mouseover to See More Details",
+            },
+            x: 550,
+            y: 650,
+            dy: 100,
+            dx: 100,
+            color: "purple"
+        }
+    ]
+    const makeAnnotations2 = d3.annotation()
+        .annotations(annotations2)
+    d3.select("svg")
+        .append("g")
+        .call(makeAnnotations2)
+
+    const annotations3 = [
+        {
+            note: {
+            label: "Electric Cars Tend To Be More Fuel Efficient",
+            },
+            x: 1150,
+            y: 330,
+            dy: 100,
+            dx: 100,
+            color: "purple"
+        }
+    ]
+    const makeAnnotations3 = d3.annotation()
+        .annotations(annotations3)
+    d3.select("svg")
+        .append("g")
+        .call(makeAnnotations3)
+
+
+}
+</script>
+</body>
+</html>
